@@ -1,0 +1,92 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# =========================
+# Testing / Coverage
+# =========================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# =========================
+# Type checkers / Linters
+# =========================
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# =========================
+# IDEs / Editors
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+
+# =========================
+# ML / Model artifacts
+# =========================
+models/
+checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+
+# =========================
+# Generated data / caches
+# =========================
+data/
+.cache/
+*.cache
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Local project files
+# =========================
+*.local
