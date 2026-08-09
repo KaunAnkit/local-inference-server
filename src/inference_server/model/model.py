@@ -17,5 +17,7 @@ class Model:
 
             logits.append(a)
 
-        return logits   
+        return logits 
+
+        #[0.0,0.2,0.3,0.4]  
             
