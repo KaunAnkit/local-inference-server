@@ -13,12 +13,12 @@ def test_generator():
             "<EOS>":4}
 
     tokenizer = Tokenizer(vocab)
-    model = Model(4)
+    model = Model(5)
     sampler = Sampler()
 
     generator = Generator(tokenizer,model,sampler)
 
     result = generator.generate("Hello",max_new_tokens=3)
 
-    assert result == "Cat Cat Cat"
+    assert result == "Cat <EOS> <EOS>"
     

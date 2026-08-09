@@ -9,15 +9,17 @@ class Model:
 
     def forward(self,encoded):
 
-        logits = []
+        logits = [0.1] * self.vocab_size
 
-        for token_id in range(self.vocab_size):
+        if encoded[-1] == 0:
 
-            a = token_id/self.vocab_size
+            logits[3] = 0.9
 
-            logits.append(a)
+        if encoded[-1] == 3:
+
+            logits[4] = 0.9
 
         return logits 
 
         #[0.0,0.2,0.3,0.4]  
-            
+        
