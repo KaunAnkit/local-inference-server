@@ -4,7 +4,14 @@ class Tokenizer:
     def __init__(self,vocab: dict):
 
         self.vocab = vocab
+
+        if "<EOS>" not in self.vocab:
+
+            vocab["<EOS>"] = len(vocab)      
+
         self.reverse_vocab = {v: k for k, v in self.vocab.items()}
+
+        self.eos_token_id = self.vocab["<EOS>"]
         
 
     def encode(self,token):
@@ -33,7 +40,7 @@ class Tokenizer:
 
         return " ".join(decoded_token)
 
-
+   
     
 
         

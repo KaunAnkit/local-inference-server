@@ -31,3 +31,12 @@ def test_round_trip():
     result = model.decode(result)
     
     assert result == "Hello World"
+
+def test_eos_token():
+
+    model = Tokenizer(vocab)
+
+    result = model.eos_token_id
+
+    assert result == 4
+    

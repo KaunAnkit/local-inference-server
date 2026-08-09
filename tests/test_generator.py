@@ -10,7 +10,7 @@ def test_generator():
             "World":1,
             "Hi":2,
             "Cat":3,
-            }
+            "<EOS>":4}
 
     tokenizer = Tokenizer(vocab)
     model = Model(4)
