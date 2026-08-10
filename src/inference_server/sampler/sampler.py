@@ -1,19 +1,52 @@
-
+import math
+import random
 class Sampler:
 
     def sample(self,logits):
 
-        value = logits[0]
-        value_index = 0
 
-        for index,logit in enumerate(logits):
+        probalility  = self.softmax(logits)
 
-            if logit >= value:
+        cumulative = 0
 
-                value = logit
-                value_index = index
+        for x in range(len(probalility)):
+
+            cumulative += probalility[x]
+            probalility[x] = cumulative
+
+        random_value = random.random()
+
+        for x in range(len(probalility)):
+
+            if probalility[x] >= random_value:
+
+                return x
+        
+
+    def softmax(self,logits):
+
+        probabilites = logits.copy()
+
+        sum_of_logits = 0
+        data = max(probabilites)
+
+        for x in range(len(probabilites)):
+
+            probabilites[x] -= data
+
+            probabilites[x] = math.exp(probabilites[x])
+
+            sum_of_logits += probabilites[x]
 
 
-        return value_index
+        for x in range(len(probabilites)):
+
+            probabilites[x] = probabilites[x]/sum_of_logits
+
+        return probabilites
+
+
+        
+
 
         

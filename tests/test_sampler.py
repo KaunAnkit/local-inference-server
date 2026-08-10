@@ -1,15 +1,33 @@
 from inference_server.sampler.sampler import Sampler
+import pytest
+import random
 
 
-def test_sampler():
-
-    a = [0.0, 0.2, 0.4, 0.6, 0.8] 
-    b = [0.9, 0.2, 0.8] 
+def test_sampling(monkeypatch):
 
     sampler = Sampler()
 
-    result_1 = sampler.sample(a)
-    result_2 = sampler.sample(b)
+    monkeypatch.setattr(
+        random,
+        "random",
+        lambda: 0.05
+    )
 
-    assert result_1 == 4
-    assert result_2 == 0
+    result = sampler.sample([1.0, 2.0, 3.0])
+
+    assert result == 0
+
+
+def test_softmax():
+
+    logits = [1.0, 2.0, 3.0]
+
+    sampler = Sampler()
+
+    result_1 = sampler.softmax(logits)
+
+    assert result_1 == pytest.approx(
+        [0.0900, 0.2447, 0.6652],
+        rel=1e-3
+    )
+
