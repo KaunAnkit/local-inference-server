@@ -19,8 +19,13 @@ class Generator:
 
             next_token = self.sampler.sample(logits)
 
+            if next_token == self.tokenizer.eos_token_id:
+                break
+
             encoded_input.append(next_token)
             generated_id.append(next_token)
+
+            
 
 
         return self.tokenizer.decode(generated_id)

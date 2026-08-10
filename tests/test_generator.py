@@ -20,5 +20,5 @@ def test_generator():
 
     result = generator.generate("Hello",max_new_tokens=3)
 
-    assert result == "Cat <EOS> <EOS>"
+    assert result == "Cat"
     
