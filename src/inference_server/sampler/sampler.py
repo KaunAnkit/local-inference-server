@@ -5,20 +5,20 @@ class Sampler:
     def sample(self,logits):
 
 
-        probalility  = self.softmax(logits)
+        probabilities  = self.softmax(logits)
 
         cumulative = 0
 
-        for x in range(len(probalility)):
+        for x in range(len(probabilities)):
 
-            cumulative += probalility[x]
-            probalility[x] = cumulative
+            cumulative += probabilities[x]
+            probabilities[x] = cumulative
 
         random_value = random.random()
 
-        for x in range(len(probalility)):
+        for x in range(len(probabilities)):
 
-            if probalility[x] >= random_value:
+            if probabilities[x] >= random_value:
 
                 return x
         
