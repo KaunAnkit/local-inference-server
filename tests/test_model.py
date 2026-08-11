@@ -1,5 +1,5 @@
 from inference_server.model.model import Model
-
+from inference_server.model.hf_model import HFModel
 
 def test_model_cat():
 
@@ -18,3 +18,7 @@ def test_model_EOS():
     assert result[4] == 0.9
     assert result[3] == 0.1
 
+def test_model_loads():
+    model = HFModel()
+
+    assert model.model is not None
