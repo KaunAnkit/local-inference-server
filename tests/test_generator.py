@@ -29,7 +29,7 @@ def test_generator(monkeypatch):
 
         generator = Generator(tokenizer,model,sampler)
 
-        result = generator.generate("Hello",max_new_tokens=3)
+        result = generator.generate("Hello",max_new_tokens=3,temperature=0.5)
 
         assert result == "Cat"
 
