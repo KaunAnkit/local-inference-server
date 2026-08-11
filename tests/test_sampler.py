@@ -13,7 +13,7 @@ def test_sampling(monkeypatch):
         lambda: 0.05
     )
 
-    result = sampler.sample([1.0, 2.0, 3.0])
+    result = sampler.sample([1.0, 2.0, 3.0],temperature=1)
 
     assert result == 0
 
@@ -31,3 +31,17 @@ def test_softmax():
         rel=1e-3
     )
 
+def test_temperature():
+    logits = [1.0, 2.0, 3.0]
+
+    sampler = Sampler()
+
+    result = sampler.apply_temperature(logits, temperature=0.5)
+
+    assert result == [2.0, 4.0, 6.0]
+
+    with pytest.raises(ValueError):
+        sampler.apply_temperature(logits, temperature=0)
+
+    with pytest.raises(ValueError):
+        sampler.apply_temperature(logits,temperature=-0.3)

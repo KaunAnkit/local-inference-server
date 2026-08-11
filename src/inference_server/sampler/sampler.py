@@ -2,7 +2,9 @@ import math
 import random
 class Sampler:
 
-    def sample(self,logits):
+    def sample(self,logits,temperature=0.5):
+
+        logits = self.apply_temperature(logits,temperature)
 
 
         probabilities  = self.softmax(logits)
@@ -46,6 +48,13 @@ class Sampler:
         return probabilites
 
 
+    def apply_temperature(self,logits,temperature):
+
+        if temperature <= 0:
+
+            raise ValueError("temperature must be greater than 0")
+
+        return [logit/temperature for logit in logits]
         
 
 
