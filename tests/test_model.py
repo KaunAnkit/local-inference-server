@@ -22,3 +22,13 @@ def test_model_loads():
     model = HFModel()
 
     assert model.model is not None
+
+def test_model_output():
+
+    model = HFModel()
+
+    result = model.forward([1,2,3])
+
+
+    assert isinstance(result, list)
+    assert len(result) == 49152

@@ -1,4 +1,5 @@
 from inference_server.tokenizer.tokenizer import Tokenizer
+from inference_server.tokenizer.hf_tokenizer import HFTokenizer
 
 vocab = {"Hello":0,
             "World":1,
@@ -39,4 +40,30 @@ def test_eos_token():
     result = model.eos_token_id
 
     assert result == 4
-    
+
+def test_tokenizer_loads():
+    tokenizer = HFTokenizer()
+
+    assert tokenizer.tokenizer is not None
+
+def test_hf_encode():
+
+    tokenizer = HFTokenizer()
+
+    result = tokenizer.encode("Hello world")
+
+    print(result)
+
+    assert isinstance(result, list)
+    assert all(isinstance(token_id, int) for token_id in result)
+    assert len(result) > 0
+
+def test_hf_round_trip():
+    tokenizer = HFTokenizer()
+
+    text = "Hello world"
+
+    encoded = tokenizer.encode(text)
+    decoded = tokenizer.decode(encoded)
+
+    assert decoded == text

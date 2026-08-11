@@ -14,7 +14,7 @@ class HFModel:
 
         encoded = torch.tensor([encoded])
 
-        with torch.no_grad:
+        with torch.no_grad():
             output = self.model(encoded)
 
-        return output.logits[0, -1, :]
+        return output.logits[0, -1, :].tolist()
