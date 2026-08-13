@@ -13,15 +13,23 @@ class Generator:
 
         generated_id = []
 
+        past_key_values = None
+
         for x in range(max_new_tokens):
 
-            logits = self.model.forward(encoded_input)
+            if past_key_values == None:
+
+                logits,past_key_values= self.model.forward(encoded_input)
+            else:
+
+                logits,past_key_values = self.model.forward([next_token],past_key_values)
 
             next_token = self.sampler.sample(logits,temperature)
 
             if next_token == self.tokenizer.eos_token_id:
                 break
 
+            
             encoded_input.append(next_token)
             generated_id.append(next_token)
 

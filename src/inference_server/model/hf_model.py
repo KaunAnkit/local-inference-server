@@ -10,11 +10,14 @@ class HFModel:
             "HuggingFaceTB/SmolLM2-135M"
         )
 
-    def forward(self,encoded):
+    def forward(self,encoded,past_key_values=None):
 
         encoded = torch.tensor([encoded])
 
-        with torch.no_grad():
-            output = self.model(encoded)
+        with torch.inference_mode():
+            output = self.model(encoded,
+                                past_key_values=past_key_values,
+                                use_cache=True)
 
-        return output.logits[0, -1, :].tolist()
+        return (output.logits[0, -1, :].tolist(),
+                output.past_key_values)

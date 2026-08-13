@@ -3,9 +3,12 @@ from inference_server.model.hf_model import HFModel
 from inference_server.sampler.sampler import Sampler
 from inference_server.tokenizer.hf_tokenizer import HFTokenizer
 import random
+import time
 
 
 def test_generator():
+
+        start = time.perf_counter()
 
         tokenizer = HFTokenizer()
         model = HFModel()
@@ -13,8 +16,14 @@ def test_generator():
 
         generator = Generator(tokenizer,model,sampler)
 
-        result = generator.generate("Hello",max_new_tokens=3,temperature=0.5)
+        result = generator.generate(
+                "Explain what Python is",
+                max_new_tokens=50,
+                temperature=0.7)
+
+        elapsed = time.perf_counter() - start
 
         print(result)
 
-
+        print(f"Time: {elapsed:.2f}s")
+        print(f"Tokens/sec: {50 / elapsed:.2f}")
