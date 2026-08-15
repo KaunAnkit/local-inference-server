@@ -17,7 +17,7 @@ class Generator:
 
         for x in range(max_new_tokens):
 
-            if past_key_values == None:
+            if past_key_values is None:
 
                 logits,past_key_values= self.model.forward(encoded_input)
             else:
@@ -36,8 +36,9 @@ class Generator:
             
 
 
-        return self.tokenizer.decode(generated_id)
+            yield self.tokenizer.decode(generated_id)
 
+            
 
 
     

@@ -16,14 +16,15 @@ def test_generator():
 
         generator = Generator(tokenizer,model,sampler)
 
-        result = generator.generate(
+        for token in generator.generate(
                 "Explain what Python is",
                 max_new_tokens=50,
-                temperature=0.7)
+                temperature=0.7):
+                print(token, end="",flush=True)
 
         elapsed = time.perf_counter() - start
 
-        print(result)
+        
 
         print(f"Time: {elapsed:.2f}s")
         print(f"Tokens/sec: {50 / elapsed:.2f}")

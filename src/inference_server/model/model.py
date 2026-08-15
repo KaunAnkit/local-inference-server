@@ -19,7 +19,7 @@ class Model:
 
             logits[4] = 0.9
 
-        return logits 
+        return logits , None
 
         #[0.0,0.2,0.3,0.4]  
         
