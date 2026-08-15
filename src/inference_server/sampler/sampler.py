@@ -1,13 +1,18 @@
 import math
 import random
+
 class Sampler:
 
-    def sample(self,logits,temperature=0.5):
+    def sample(self,logits,temperature=0.5,top_k = 50):
 
         logits = self.apply_temperature(logits,temperature)
 
 
-        probabilities  = self.softmax(logits)
+        top_logits, top_indices = self.top_k(logits, top_k)
+
+
+
+        probabilities  = self.softmax(top_logits)
 
         cumulative = 0
 
@@ -22,7 +27,7 @@ class Sampler:
 
             if probabilities[x] >= random_value:
 
-                return x
+                return top_indices[x]
         
 
     def softmax(self,logits):
@@ -56,6 +61,20 @@ class Sampler:
 
         return [logit/temperature for logit in logits]
         
+
+    def top_k(self, logits, k):
+
+        top = sorted(
+            enumerate(logits),
+            key=lambda item: item[1],
+            reverse=True
+        )[:k]
+
+        top_indices = [idx for idx, _ in top]
+        top_logits = [logit for _, logit in top]
+
+        return top_logits, top_indices
+
 
 
         
