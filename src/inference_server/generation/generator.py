@@ -7,7 +7,7 @@ class Generator:
         self.model = model
         self.sampler = sampler
 
-    def generate(self,prompt,max_new_tokens,temperature=0.5):
+    def generate(self,prompt,max_new_tokens,temperature=0.5,top_k=50,top_p=0.9,penalty=1.0):
 
         encoded_input = self.tokenizer.encode(prompt)
 
@@ -24,7 +24,14 @@ class Generator:
 
                 logits,past_key_values = self.model.forward([next_token],past_key_values)
 
-            next_token = self.sampler.sample(logits,temperature)
+            next_token = self.sampler.sample(
+                    logits,
+                    generated_id,
+                    temperature=temperature,
+                    top_k=top_k,
+                    top_p=top_p,
+                    penalty=penalty,
+                )
 
             if next_token == self.tokenizer.eos_token_id:
                 break
@@ -36,7 +43,7 @@ class Generator:
             
 
 
-            yield self.tokenizer.decode(generated_id)
+            yield self.tokenizer.decode([next_token])
 
             
 
