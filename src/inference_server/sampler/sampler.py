@@ -9,8 +9,6 @@ class Sampler:
 
             logits = self.apply_repetition_penalty(logits,generated_tokens,penalty)
 
-
-
         logits = self.apply_temperature(logits,temperature)
 
         if top_k is not None:
