@@ -1,3 +1,5 @@
+from  inference_server.scheduler.request import Request
+
 
 class Generator:
 
@@ -17,43 +19,67 @@ class Generator:
             penalty: float = 1.0,
         ):
 
-        encoded_input = self.tokenizer.encode(prompt)
+        request = Request(
+            prompt=prompt,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            penalty=penalty,
+        )
 
-        generated_id = []
+        self.initialize(request)
 
-        past_key_values = None
+        while not request.finished:
 
-        for x in range(max_new_tokens):
-
-            if past_key_values is None:
-
-                logits,past_key_values= self.model.forward(encoded_input)
-            else:
-
-                logits,past_key_values = self.model.forward([next_token],past_key_values)
-
-            next_token = self.sampler.sample(
-                    logits,
-                    generated_id,
-                    temperature=temperature,
-                    top_k=top_k,
-                    top_p=top_p,
-                    penalty=penalty,
-                )
-
-            if next_token == self.tokenizer.eos_token_id:
-                break
-
-            
-            encoded_input.append(next_token)
-            generated_id.append(next_token)
-
-            
+            yield self.step(request)
 
 
-            yield self.tokenizer.decode([next_token])
 
-            
+    def initialize(self,request : Request):
+
+        request.encoded_input = self.tokenizer.encode(request.prompt)
+
+        request.generated_id = []
+
+        request.past_key_values = None
+
+        request.finished = False
+
+    def step(self,request : Request):
+
+        data = request.encoded_input
+
+        cache = request.past_key_values
+
+        if cache is None:
+
+            logits,cache = self.model.forward(data)
+
+        else:
+            last_token = request.encoded_input[-1]
 
 
-    
+            logits,cache = self.model.forward([last_token],cache)
+                
+        request.past_key_values = cache
+
+        next_token = self.sampler.sample(
+                logits,
+                request.generated_ids,
+                temperature=request.temperature,
+                top_k=request.top_k,
+                top_p=request.top_p,
+                penalty=request.penalty,
+            )
+
+        request.encoded_input.append(next_token)
+        request.generated_ids.append(next_token)
+
+        request.count += 1
+
+        if next_token == self.tokenizer.eos_token_id or request.max_new_tokens <= request.count:
+            request.finished = True
+            return ""
+
+        return self.tokenizer.decode([next_token])
