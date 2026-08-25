@@ -4,10 +4,10 @@ import torch
 
 class HFModel:
 
-    def __init__(self):
+    def __init__(self,model_name = "HuggingFaceTB/SmolLM2-135M"):
 
         self.model = AutoModelForCausalLM.from_pretrained(
-            "HuggingFaceTB/SmolLM2-135M"
+            model_name
         )
 
     def forward(self,encoded,past_key_values=None):

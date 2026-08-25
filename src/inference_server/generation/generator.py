@@ -7,7 +7,15 @@ class Generator:
         self.model = model
         self.sampler = sampler
 
-    def generate(self,prompt,max_new_tokens,temperature=0.5,top_k=50,top_p=0.9,penalty=1.0):
+    def generate(
+            self,
+            prompt: str,
+            max_new_tokens: int,
+            temperature: float = 0.7,
+            top_k: int | None = 50,
+            top_p: float | None = 0.9,
+            penalty: float = 1.0,
+        ):
 
         encoded_input = self.tokenizer.encode(prompt)
 

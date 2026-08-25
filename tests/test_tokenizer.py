@@ -1,6 +1,7 @@
 from inference_server.tokenizer.tokenizer import Tokenizer
 from inference_server.tokenizer.hf_tokenizer import HFTokenizer
 
+
 vocab = {"Hello":0,
             "World":1,
             "Hi":2,
