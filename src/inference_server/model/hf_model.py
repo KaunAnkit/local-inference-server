@@ -12,12 +12,16 @@ class HFModel:
 
     def forward(self,encoded,past_key_values=None):
 
-        encoded = torch.tensor([encoded])
+
+        if isinstance(encoded[0], list):
+            encoded = torch.tensor(encoded)
+        else:
+            encoded = torch.tensor([encoded])
 
         with torch.inference_mode():
             output = self.model(encoded,
                                 past_key_values=past_key_values,
                                 use_cache=True)
 
-        return (output.logits[0, -1, :].tolist(),
+        return (output.logits[:, -1, :],
                 output.past_key_values)
