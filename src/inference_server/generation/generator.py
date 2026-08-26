@@ -61,7 +61,7 @@ class Generator:
 
 
             logits,cache = self.model.forward([last_token],cache)
-                
+
         request.past_key_values = cache
 
         next_token = self.sampler.sample(
@@ -72,6 +72,38 @@ class Generator:
                 top_p=request.top_p,
                 penalty=request.penalty,
             )
+
+        request.encoded_input.append(next_token)
+        request.generated_ids.append(next_token)
+
+        request.count += 1
+
+        if next_token == self.tokenizer.eos_token_id or request.max_new_tokens <= request.count:
+            request.finished = True
+            return ""
+
+        return self.tokenizer.decode([next_token])
+
+
+    def prepare_input(self, request: Request):
+
+        if request.past_key_values is None:
+            return request.encoded_input
+
+        return [request.encoded_input[-1]]
+    
+    def process_output(self,request : Request, logits, cache):
+        
+        request.past_key_values = cache
+
+        next_token = self.sampler.sample(
+            logits,
+            request.generated_ids,
+            temperature=request.temperature,
+            top_k=request.top_k,
+            top_p=request.top_p,
+            penalty=request.penalty,
+        )
 
         request.encoded_input.append(next_token)
         request.generated_ids.append(next_token)
