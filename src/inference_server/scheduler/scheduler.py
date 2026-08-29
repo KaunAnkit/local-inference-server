@@ -1,12 +1,16 @@
 
 from inference_server.generation.generator import Generator
 from inference_server.model.HFModel import HFModel
+from inference_mode.cache.block_manager import BlockManager
 
 class Scheduler:
 
-    def __init__(self):
-        self.requests = []
+    def __init__(self,block_manager):
+
+        self.block_manager = block_manager    
         self.finished = []
+        self.requests = []
+
 
     def add(self, request):
         self.requests.append(request)
@@ -19,10 +23,7 @@ class Scheduler:
 
         return len(self.requests) > 0
 
-    def step(self, generator : Generator, model : HFModel):
-
-        prefill_requests = []
-        decode_requests = []
+    def step(self, generator : Generator):
 
         if not self.requests:
             return {}
@@ -30,44 +31,52 @@ class Scheduler:
 
         for request in self.requests:
 
-            if request.past_key_values is None:
-
-                prefill_requests.append(request)
-
-            else:
-                decode_requests.append(request)
-
-
-        for request in prefill_requests:
-
-            inputs = generator.prepare_input(request)
-            logits, cache = model.forward(
-                    inputs,
-                    request.past_key_values
-                )
-
-            token = generator.process_output(request,logits,cache)
-
-            if token:
-                tokens[request.id] = token
-
             if request.finished:
+
                 self.finished.append(request)
 
-        batch_inputs = []
+            elif request.state == PREFILL:
 
-        for request in decode_requests:
+                token = generator.prefill(request)
 
-            batch_inputs.append(
-                generator.prepare_input(request)
-            )
+                if token:
+                    tokens[request.id] = token
 
-        
+            elif request.state == DECODING:
+
+                if generator.need_new_block(request):
+
+                    block = self.block_manager.allocate(request.id)
+
+                    if block is None:
+
+                        request.state = WAITING_FOR_BLOCK
+                    
+                        continue
+
+                    request.block_table.append(block)
+
+                
+                token = generator.decode(request)
+                if token:
+                    tokens[request.id] = token
+
+            elif request.state == WAITING_FOR_BLOCK:
+
+                block = self.block_manager.allocate(request.id)
+
+                if block is not None:
+                    request.block_table.append(block)
+                    request.state = DECODING
+
         for request in self.finished:
-            self.remove(request)
 
-        self.finished.clear()
-        
+            for block in request.block_table:
+                self.block_manager.free(block)
+
+            request.block_table.clear()
+
+
         return tokens
 
         

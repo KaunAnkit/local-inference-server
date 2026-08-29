@@ -8,6 +8,7 @@ class Generator:
         self.tokenizer = tokenizer
         self.model = model
         self.sampler = sampler
+        self.block_size = 16
 
     def generate(
             self,
@@ -32,7 +33,11 @@ class Generator:
 
         while not request.finished:
 
-            yield self.step(request)
+            if request.state == RequestState.PREFILL:
+                yield self.prefill(request)
+
+            elif request.state == RequestState.DECODING:
+                yield self.decode(request)
 
 
 
@@ -40,7 +45,7 @@ class Generator:
 
         request.encoded_input = self.tokenizer.encode(request.prompt)
 
-        request.generated_id = []
+        request.generated_ids = []
 
         request.past_key_values = None
 
@@ -84,14 +89,36 @@ class Generator:
 
         return self.tokenizer.decode([next_token])
 
+    def prepare_prefill_input(self, request):
 
-    def prepare_input(self, request: Request):
+        return request.encoded_input
 
-        if request.past_key_values is None:
-            return request.encoded_input
+    def prepare_decode_input(self, request):
 
         return [request.encoded_input[-1]]
+
     
+    def prefill(self,request):
+        
+        inputs  = self.prepare_prefill_input(request)
+
+        logits,cache = self.model.forward(inputs)
+
+
+        request.state = RequestState.DECODING
+        
+        return self.process_output(request, logits, cache)
+
+    def decode(self, request):
+        inputs = self.prepare_decode_input(request)
+
+        logits, cache = self.model.forward(
+            inputs,
+            request.past_key_values
+        )
+
+        return self.process_output(request, logits, cache)
+
     def process_output(self,request : Request, logits, cache):
         
         request.past_key_values = cache
@@ -115,3 +142,15 @@ class Generator:
             return ""
 
         return self.tokenizer.decode([next_token])
+
+    def need_new_block(self,request):
+
+        tokens_needed = len(request.generated_ids) + 1
+
+        expected_blocks = (tokens_needed + self.block_size - 1) // self.block_size
+
+        allocated_blocks = len(request.block_table)
+
+        return expected_blocks > allocated_blocks
+
+            
