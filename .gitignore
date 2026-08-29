@@ -90,3 +90,6 @@ data/
 # Local project files
 # =========================
 *.local
+
+
+docs/
