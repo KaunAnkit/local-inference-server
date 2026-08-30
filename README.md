@@ -1,8 +1,8 @@
 # Local LLM Inference Server
 
-A minimal production-style LLM inference server built from scratch to understand how modern language model inference works.
+A minimal, production-style LLM inference server built from scratch to understand how modern language model serving works.
 
-Instead of relying entirely on high-level libraries, this project implements the core inference pipeline step by step, including decoding algorithms, KV Cache, and a REST API for text generation.
+Instead of relying entirely on high-level libraries, this project implements the core inference pipeline step by step — tokenization, decoding algorithms, KV Cache, memory-aware request scheduling, and a REST API for text generation.
 
 ---
 
@@ -12,6 +12,9 @@ Instead of relying entirely on high-level libraries, this project implements the
 - Custom tokenizer wrapper
 - Autoregressive text generation
 - KV Cache support
+- KV Cache Block Manager (fixed-size block allocation)
+- Memory-aware request scheduler
+- Multi-request state machine
 - Temperature sampling
 - Top-k sampling
 - Top-p (Nucleus) sampling
@@ -31,6 +34,9 @@ src/
     │   ├── main.py
     │   └── schemas.py
     │
+    ├── cache/
+    │   └── block_manager.py
+    │
     ├── generation/
     │   └── generator.py
     │
@@ -41,6 +47,11 @@ src/
     ├── sampler/
     │   └── sampler.py
     │
+    ├── scheduler/
+    │   ├── scheduler.py
+    │   ├── request.py
+    │   └── state.py
+    │
     ├── tokenizer/
     │   ├── hf_tokenizer.py
     │   └── tokenizer.py
@@ -50,49 +61,19 @@ src/
 
 ---
 
-# Inference Pipeline
+## Inference Pipeline
 
-```
-                Prompt
-                   │
-                   ▼
-             HF Tokenizer
-                   │
-                   ▼
-             Token IDs
-                   │
-                   ▼
-            Language Model
-         (KV Cache Enabled)
-                   │
-                   ▼
-               Logits
-                   │
-                   ▼
-       Repetition Penalty
-                   │
-                   ▼
-          Temperature Scaling
-                   │
-                   ▼
-             Top-k Sampling
-                   │
-                   ▼
-          Top-p Sampling
-                   │
-                   ▼
-          Sample Next Token
-                   │
-                   ▼
-      Append Token + Update Cache
-                   │
-                   ▼
-        Stop on EOS or Max Tokens
-```
+![Inference pipeline architecture](docs/architecture.png)
 
 ---
 
-# Installation
+## Request Lifecycle
+
+![Request lifecycle state machine](docs/request-lifecycle.png)
+
+---
+
+## Installation
 
 Clone the repository
 
@@ -116,7 +97,7 @@ pip install -r requirements.txt
 
 ---
 
-# Running the API
+## Running the API
 
 ```bash
 uvicorn --app-dir src inference_server.api.main:app --reload
@@ -132,20 +113,20 @@ to access the Swagger UI.
 
 ---
 
-# API
+## API
 
-## POST /generate
+### POST /generate
 
 Example request
 
 ```json
 {
-    "prompt":"Explain what an LLM is",
-    "max_new_tokens":100,
-    "temperature":0.7,
-    "top_k":50,
-    "top_p":0.9,
-    "penalty":1.2
+    "prompt": "Explain what an LLM is",
+    "max_new_tokens": 100,
+    "temperature": 0.7,
+    "top_k": 50,
+    "top_p": 0.9,
+    "penalty": 1.2
 }
 ```
 
@@ -157,25 +138,19 @@ Large Language Models (LLMs) are neural networks trained on massive text dataset
 
 ---
 
-# Implemented Sampling Algorithms
+## Implemented Sampling Algorithms
 
 ### Temperature
 
 Controls randomness during sampling.
 
----
-
 ### Top-k Sampling
 
 Keeps only the k highest probability tokens before sampling.
 
----
-
 ### Top-p (Nucleus) Sampling
 
 Samples from the smallest set of tokens whose cumulative probability exceeds p.
-
----
 
 ### Repetition Penalty
 
@@ -183,17 +158,39 @@ Reduces the probability of previously generated tokens to decrease repetition.
 
 ---
 
-# KV Cache
+## KV Cache
 
-The first forward pass processes the entire prompt.
+The first forward pass processes the entire prompt (prefill). Subsequent generation steps process only the latest generated token while reusing cached attention states, which significantly reduces inference latency.
 
-Subsequent generations only process the latest generated token while reusing cached attention states.
+### KV Cache Block Manager
 
-This significantly reduces inference latency.
+Instead of allocating memory continuously, the KV Cache is divided into fixed-size blocks. Each request owns a block table that tracks its allocated blocks.
+
+![KV cache block allocation example](docs/kv-cache-block-allocation.png)
+
+When memory is exhausted:
+
+- New requests enter a waiting state.
+- Running requests continue decoding.
+- Finished requests release their blocks.
+- Waiting requests automatically resume once memory becomes available.
+
+### Scheduler
+
+The scheduler manages multiple concurrent requests through four states: `PREFILL`, `DECODING`, `WAITING_FOR_BLOCK`, and `FINISHED`.
+
+Each scheduler iteration:
+
+1. Processes prefill requests.
+2. Decodes active requests.
+3. Allocates KV cache blocks when required.
+4. Suspends requests if memory is unavailable.
+5. Reclaims memory from finished requests.
+6. Resumes waiting requests automatically.
 
 ---
 
-# Performance
+## Performance
 
 | Version | Tokens/sec |
 |---------|-----------:|
@@ -205,7 +202,7 @@ This significantly reduces inference latency.
 
 ---
 
-# Running Tests
+## Running Tests
 
 ```bash
 pytest
@@ -213,9 +210,9 @@ pytest
 
 ---
 
-# Roadmap
+## Roadmap
 
-## Completed
+### Completed
 
 - [x] Tokenizer
 - [x] Hugging Face model wrapper
@@ -228,8 +225,11 @@ pytest
 - [x] Streaming generation
 - [x] FastAPI REST API
 - [x] Unit tests
+- [x] Request scheduler
+- [x] KV Cache Block Manager
+- [x] Memory-aware scheduling
 
-## Next
+### Next
 
 - [ ] Continuous batching
 - [ ] Prefix caching
@@ -237,12 +237,12 @@ pytest
 - [ ] Quantization
 - [ ] Flash Attention
 - [ ] OpenAI-compatible API
-- [ ] Multi-request scheduling
+- [ ] GPU optimization
 - [ ] Benchmark suite
 
 ---
 
-# Learning Goals
+## Learning Goals
 
 This project is built for educational purposes to better understand:
 
@@ -251,11 +251,14 @@ This project is built for educational purposes to better understand:
 - Efficient generation
 - Sampling algorithms
 - KV Cache
-- Production inference systems
+- Request scheduling
+- Memory management
+- Continuous batching
+- Modern LLM serving systems (e.g. vLLM, TensorRT-LLM)
 
 ---
 
-# Contributing
+## Contributing
 
 Contributions, suggestions, and discussions are welcome.
 
@@ -263,6 +266,6 @@ Feel free to open an issue or submit a pull request.
 
 ---
 
-# License
+## License
 
 MIT License

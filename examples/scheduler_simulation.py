@@ -27,7 +27,7 @@ request1 = Request(
 request2 = Request(
     id=2,
     prompt="What is AI?",
-    max_new_tokens=10,
+    max_new_tokens=20,
 )
 
 request3 = Request(
