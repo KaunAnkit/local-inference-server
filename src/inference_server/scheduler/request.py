@@ -1,23 +1,25 @@
 from dataclasses import dataclass, field
-
+from inference_server.scheduler.state import RequestState
 @dataclass
 class Request:
+
+    id: int
     prompt: str
     max_new_tokens: int
 
     encoded_input: list[int] = field(default_factory=list)
     generated_ids: list[int] = field(default_factory=list)
 
-    past_key_values : Any = None
+    past_key_values : any = None
 
     finished: bool = False
 
-    temperature : int
+    temperature : int = 0.5
 
-    top_k : int
-    top_p : int
+    top_k : int = 50
+    top_p : int = 0.9
 
-    penalty : int
+    penalty : int = 1
 
     count : int = 0
 

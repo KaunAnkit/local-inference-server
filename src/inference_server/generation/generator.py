@@ -1,4 +1,5 @@
 from  inference_server.scheduler.request import Request
+from inference_server.scheduler.state import RequestState
 
 
 class Generator:
@@ -123,6 +124,12 @@ class Generator:
         
         request.past_key_values = cache
 
+
+        logits = logits[-1]
+
+    
+
+
         next_token = self.sampler.sample(
             logits,
             request.generated_ids,
@@ -132,15 +139,19 @@ class Generator:
             penalty=request.penalty,
         )
 
+
+
         request.encoded_input.append(next_token)
         request.generated_ids.append(next_token)
 
         request.count += 1
 
-        if next_token == self.tokenizer.eos_token_id or request.max_new_tokens <= request.count:
+        if next_token == self.tokenizer.eos_token_id or request.count >= request.max_new_tokens:
             request.finished = True
-            return ""
+            request.state = RequestState.FINISHED
+            return None
 
+        
         return self.tokenizer.decode([next_token])
 
     def need_new_block(self,request):

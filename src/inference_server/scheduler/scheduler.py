@@ -1,7 +1,8 @@
 
 from inference_server.generation.generator import Generator
-from inference_server.model.HFModel import HFModel
-from inference_mode.cache.block_manager import BlockManager
+from inference_server.model.hf_model import HFModel
+from inference_server.cache.block_manager import BlockManager
+from inference_server.scheduler.state import RequestState
 
 class Scheduler:
 
@@ -34,15 +35,16 @@ class Scheduler:
             if request.finished:
 
                 self.finished.append(request)
+                continue
 
-            elif request.state == PREFILL:
+            elif request.state == RequestState.PREFILL:
 
                 token = generator.prefill(request)
 
                 if token:
                     tokens[request.id] = token
 
-            elif request.state == DECODING:
+            elif request.state == RequestState.DECODING:
 
                 if generator.need_new_block(request):
 
@@ -50,7 +52,7 @@ class Scheduler:
 
                     if block is None:
 
-                        request.state = WAITING_FOR_BLOCK
+                        request.state = RequestState.WAITING_FOR_BLOCK
                     
                         continue
 
@@ -61,20 +63,27 @@ class Scheduler:
                 if token:
                     tokens[request.id] = token
 
-            elif request.state == WAITING_FOR_BLOCK:
+            elif request.state == RequestState.WAITING_FOR_BLOCK:
 
                 block = self.block_manager.allocate(request.id)
 
                 if block is not None:
                     request.block_table.append(block)
-                    request.state = DECODING
+                    request.state = RequestState.DECODING
+
+                    token = generator.decode(request)
+
+                    if token:
+                        tokens[request.id] = token
 
         for request in self.finished:
-
             for block in request.block_table:
                 self.block_manager.free(block)
 
             request.block_table.clear()
+            self.remove(request)
+
+        self.finished.clear()
 
 
         return tokens

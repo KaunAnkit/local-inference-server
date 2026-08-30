@@ -1,6 +1,6 @@
 
 from collections import deque
-import dataclasses from dataclass
+from dataclasses import dataclass
 
 
 @dataclass
@@ -16,17 +16,20 @@ class BlockManager:
         self.blocks = [Block(i) for i in range(num_blocks)]
         self.free_blocks = deque(range(num_blocks))
 
-    def allocate(self,request_id):
+    def allocate(self, request_id):
 
         if not self.free_blocks:
             return None
 
         block_id = self.free_blocks.popleft()
 
-        self.blocks[block_id].owner  = request_id
+        block = self.blocks[block_id]
+        block.owner = request_id
 
-    def free(self,block_id):
+        return block
 
-        self.blocks[block].owner = None
+    def free(self, block: Block):
 
-        self.free_blocks.append(block_id)
+        block.owner = None
+
+        self.free_blocks.append(block.id)
