@@ -30,6 +30,8 @@ class Scheduler:
             return {}
         tokens = {}
 
+        decode_requests = []
+
         for request in self.requests:
 
             if request.finished:
@@ -37,12 +39,15 @@ class Scheduler:
                 self.finished.append(request)
                 continue
 
-            elif request.state == RequestState.PREFILL:
+           elif request.state == RequestState.PREFILL:
 
                 token = generator.prefill(request)
 
                 if token:
                     tokens[request.id] = token
+
+                if request.state == RequestState.DECODING:
+                    decode_requests.append(request)
 
             elif request.state == RequestState.DECODING:
 
@@ -57,11 +62,9 @@ class Scheduler:
                         continue
 
                     request.block_table.append(block)
-
+                    
+                decode_requests.append(request)
                 
-                token = generator.decode(request)
-                if token:
-                    tokens[request.id] = token
 
             elif request.state == RequestState.WAITING_FOR_BLOCK:
 
@@ -70,12 +73,12 @@ class Scheduler:
                 if block is not None:
                     request.block_table.append(block)
                     request.state = RequestState.DECODING
+                    decode_requests.append(request)
+                
 
-                    token = generator.decode(request)
-
-                    if token:
-                        tokens[request.id] = token
-
+        tokens.update(
+            generator.decode_batch(decode_requests)
+        ) 
         for request in self.finished:
             for block in request.block_table:
                 self.block_manager.free(block)

@@ -164,4 +164,16 @@ class Generator:
 
         return expected_blocks > allocated_blocks
 
-            
+        
+    def decode_batch(self, requests):
+
+        tokens = {}
+
+        for request in requests:
+
+            token = self.decode(request)
+        
+            if token:
+                tokens[request.id] = token
+
+        return tokens
